@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation\Groups;
 
 /**
  * Product
@@ -25,6 +26,7 @@ class Product
     /**
      * @var string
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="name", type="string", length=100, nullable=false)
      */
     private $name;
@@ -32,6 +34,7 @@ class Product
     /**
      * @var integer
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="quantity_szczecinek", type="integer", nullable=false)
      */
     private $quantitySzczecinek;
@@ -39,6 +42,7 @@ class Product
     /**
      * @var integer
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="quantity_wroclaw", type="integer", nullable=false)
      */
     private $quantityWroclaw;
@@ -46,6 +50,7 @@ class Product
     /**
      * @var string
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="base_price", type="decimal", precision=10, scale=2, nullable=false)
      */
     private $basePrice;
@@ -53,6 +58,7 @@ class Product
     /**
      * @var string
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="price", type="decimal", precision=10, scale=2, nullable=false)
      */
     private $price;
@@ -60,6 +66,7 @@ class Product
     /**
      * @var string
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="description", type="text", nullable=true)
      */
     private $description;
@@ -67,6 +74,7 @@ class Product
     /**
      * @var boolean
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="avaliable", type="boolean", nullable=false)
      */
     private $avaliable;
@@ -74,6 +82,7 @@ class Product
     /**
      * @var \DateTime
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="avaliable_from", type="date", nullable=true)
      */
     private $avaliableFrom;
@@ -81,6 +90,7 @@ class Product
     /**
      * @var \DateTime
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="avaliable_until", type="date", nullable=true)
      */
     private $avaliableUntil;
@@ -88,11 +98,20 @@ class Product
     /**
      * @var string
      *
+     * @Groups({"productList"})
      * @ORM\Column(name="external_url", type="string", length=255, nullable=true)
      */
     private $externalUrl;
 
+    public function set($property, $value)
+    {
+        $this->$property = $value;
+    }
 
+    public function get($property)
+    {
+        return $this->$property;
+    }
 
     /**
      * Get id

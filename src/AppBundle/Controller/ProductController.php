@@ -13,145 +13,121 @@ use JMS\Serializer\SerializerBuilder;
 /**
  * Product controller.
  *
- * @Route("product")
+ * @Route("/product")
  */
 class ProductController extends JsonController
 {
+    /**
+     * @Route("")
+     * @Method("POST")
+     */
+    public function createProductAction(Request $request)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $requestData = json_decode($request->getContent(), true);
+        $product = new Product();
+        $properties = array('name', 'quantitySzczecinek', 'quantityWroclaw', 'basePrice', 'price', 'description', 'avaliable', 'avaliableFrom', 'avaliableUntil', 'externalUrl');
+        try{
+            foreach ($properties as $property)
+            {
+                if (array_key_exists($property, $requestData))
+                {
+                    $product->set($property, $requestData[$property]);
+                }
+                else if ($property != 'description' && $property != 'avaliableFrom' && $property != 'avaliableUntil' && $property != 'externalUrl')
+                {
+                    return $this->JsonFail('Pole ' . $property . ' jest wymagane' );
+                }
+            }
+            $em->persist($product);
+            $em->flush();
+        } catch (Exception $e) {
+            return $this->JsonFail('Dodawanie nie powiodło się');
+        }
+        return $this->JsonSuccess('Dodano produkt');
+    }
 
     /**
-     * Lists all Product entities.
-     *
-     * @Route("/", name="product_index")
+     * @Route("/list")
      * @Method("GET")
      */
-    public function indexAction()
+    public function listProductAction(Request $request)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $context = SerializationContext::create()->setGroups(array('productList'));
+
+        try{
+            $products = $this->getDoctrine()->getRepository('AppBundle:Product')->findAll();
+            $products = json_decode(SerializerBuilder::create()->build()->serialize($products, 'json', $context));
+
+        } catch (Exception $e){
+            return $this->JsonFail($e);
+        }
+        return $this->JsonData($products);
+    }
+
+    /**
+     * @Route("/{id}")
+     * @Method("GET")
+     */
+    public function getProductAction(Request $request, $id)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $context = SerializationContext::create()->setGroups(array('productList'));
+
+        try{
+            $product = $this->getDoctrine()->getRepository('AppBundle:Product')->find($id);
+            $product = json_decode(SerializerBuilder::create()->build()->serialize($product, 'json', $context));
+
+        } catch (Exception $e){
+            return $this->JsonFail($e);
+        }
+        return $this->JsonData($product);
+    }
+
+    /**
+     * @Route("/{id}")
+     * @Method("PUT")
+     */
+    public function editProductAction(Request $request, $id)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $requestData = json_decode($request->getContent(), true);
+
+        $product = $em->getRepository('AppBundle:Product')->find($id);
+        $properties = array('name', 'quantitySzczecinek', 'quantityWroclaw', 'basePrice', 'price', 'description', 'avaliable', 'avaliableFrom', 'avaliableUntil', 'externalUrl');
+        try{
+            foreach ($properties as $property)
+            {
+                if (array_key_exists($property, $requestData))
+                {
+                    $product->set($property, $requestData[$property]);
+                }
+            }
+            $em->persist($product);
+            $em->flush();
+        } catch (Exception $e) {
+            return $this->JsonFail('Edycja nie powiodła się');
+        }
+        return $this->JsonSuccess('Edytowano produkt');
+    }
+
+    /**
+     * @Route("/{id}")
+     * @Method("DELETE")
+     */
+    public function removeProductAction(Request $request, $id)
     {
         $em = $this->getDoctrine()->getManager();
 
-        $products = $em->getRepository('AppBundle:Product')->findAll();
+        $product = $em->getRepository('AppBundle:Product')->find($id);
 
-        $context = SerializationContext::create()->setGroups(array('productList'));
-        $child = json_decode(SerializerBuilder::create()->build()->serialize($child, 'json', $context));
-
-        return $this->JsonData($child);
-    }
-
-    /**
-     * Creates a new Product entity.
-     *
-     * @Route("/new", name="product_new")
-     * @Method({"GET", "POST"})
-     */
-    public function newAction(Request $request)
-    {
-        $product = new Product();
-        $form = $this->createForm('AppBundle\Form\ProductType', $product);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($product);
-            $em->flush();
-
-            return $this->redirectToRoute('product_show', array('id' => $product->getId()));
-        }
-
-        return $this->render('product/new.html.twig', array(
-            'product' => $product,
-            'form' => $form->createView(),
-        ));
-    }
-
-    /**
-     * Finds and displays a Product entity.
-     *
-     * @Route("/{id}", name="product_show")
-     * @Method("GET")
-     */
-    public function showAction(Product $product)
-    {
-        $deleteForm = $this->createDeleteForm($product);
-
-        return $this->render('product/show.html.twig', array(
-            'product' => $product,
-            'delete_form' => $deleteForm->createView(),
-        ));
-    }
-
-    /**
-     * Displays a form to edit an existing Product entity.
-     *
-     * @Route("/{id}/edit", name="product_edit")
-     * @Method({"GET", "POST"})
-     */
-    public function editAction(Request $request, Product $product)
-    {
-        $deleteForm = $this->createDeleteForm($product);
-        $editForm = $this->createForm('AppBundle\Form\ProductType', $product);
-        $editForm->handleRequest($request);
-        if ($editForm->isSubmitted() && $editForm->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($product);
-            $em->flush();
-
-            return $this->redirectToRoute('product_show', array('id' => $product->getId()));
-        }
-
-        return $this->render('product/edit.html.twig', array(
-            'product' => $product,
-            'edit_form' => $editForm->createView(),
-            'delete_form' => $deleteForm->createView(),
-        ));
-    }
-
-    /**
-     * Deletes a Product entity.
-     *
-     * @Route("/{id}", name="product_delete")
-     * @Method("DELETE")
-     */
-    public function deleteAction(Request $request, Product $product)
-    {
-        $form = $this->createDeleteForm($product);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
+        try{
             $em->remove($product);
             $em->flush();
+        } catch (Exception $e) {
+            $this->JsonFail('Usuwanie się nie powiodło');
         }
-
-        return $this->redirectToRoute('product_index');
-    }
-
-    /**
-     * test
-     *
-     * @Route("/test", name="product_auction")
-     * @Method("GET")
-     */
-    public function testAction(Request $request, Product $product)
-    {
-        $integrator = $this->get('allegro_integration');
-
-        return $integrator->test();
-    }
-
-    /**
-     * Creates a form to delete a Product entity.
-     *
-     * @param Product $product The Product entity
-     *
-     * @return \Symfony\Component\Form\Form The form
-     */
-    private function createDeleteForm(Product $product)
-    {
-        return $this->createFormBuilder()
-            ->setAction($this->generateUrl('product_delete', array('id' => $product->getId())))
-            ->setMethod('DELETE')
-            ->getForm()
-        ;
-    }
-
-
-
+        return $this->JsonSuccess('Usunieto produkt');
+    }   
 }
